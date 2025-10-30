@@ -1,0 +1,57 @@
+# How has the distribution of social protection and labor program beneficiaries across income quintiles evolved in Ethiopia between 2004 and 2018?
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# Folders
+data_raw_folder = "data_raw/"
+data_clean_folder = "data_clean/"
+figures_folder = "figures/"
+
+# Load CSV
+filename = "social-protection-and-labor_eth_filtered.csv"  # Filtered dataset with only relevant rows
+df = pd.read_csv(os.path.join(data_raw_folder, filename))
+
+# Keep only needed columns
+df = df[["Year", "Indicator Name", "Value"]]
+
+# Convert Year and Value to numeric, drop invalid rows
+df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
+df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+df = df.dropna(subset=["Year", "Value"])
+
+# Pivot indicators into separate columns
+df_pivot = df.pivot(index="Year", columns="Indicator Name", values="Value").reset_index()
+df_pivot = df_pivot.sort_values("Year")
+
+print("Pivoted Ethiopia dataset:")
+display(df_pivot)
+
+# Interpolate missing values for smooth plotting (optional)
+df_plot = df_pivot.interpolate(method='linear')
+
+# Plot the indicators
+plt.figure(figsize=(10,6))
+plt.plot(df_plot["Year"], df_plot["Beneficiary incidence in 1st quintile (poorest) (%) -All Social Protection and Labor"], 
+         marker='o', linestyle='-', label="Beneficiary incidence in 1st quintile (poorest)")
+plt.plot(df_plot["Year"], df_plot["Beneficiary incidence in 2nd quintile (%) -All Social Protection and Labor"], 
+         marker='o', linestyle='-', label="Beneficiary incidence in 2nd quintile")
+plt.plot(df_plot["Year"], df_plot["Beneficiary incidence in 3rd quintile (%) -All Social Protection and Labor"], 
+         marker='o', linestyle='-', label="Beneficiary incidence in 3rd quintile")
+plt.plot(df_plot["Year"], df_plot["Beneficiary incidence in 4th quintile (%) -All Social Protection and Labor"], 
+         marker='o', linestyle='-', label="Beneficiary incidence in 4th quintile")
+plt.plot(df_plot["Year"], df_plot["Beneficiary incidence in 5th quintile (richest) (%) -All Social Protection and Labor"], 
+         marker='o', linestyle='-', label="Beneficiary incidence in 5th quintile (richest)")
+
+plt.title("Ethiopia: Beneficiary incidence in 1st vs 2nd vs 3rd vs 4th vs 5th quintiles  (%) (2004-2018)")
+plt.xlabel("Year")
+plt.ylabel("Percentage")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(figures_folder, "ethiopia_beneficiary_incidence_in_1st_vs_2nd_vs_3rd_vs_4th_vs_5th_quintiles.png"))
+plt.show()
+
+# Save cleaned CSV
+df_pivot.to_csv(os.path.join(data_clean_folder, "ethiopia_beneficiary_incidence_in_1st_vs_2nd_vs_3rd_vs_4th_vs_5th_quintiles"), index=False)
